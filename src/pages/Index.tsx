@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ThemeProvider } from '@/context/ThemeContext';
 import Header from '@/components/Header';
 import PrivacyPanel from '@/components/PrivacyPanel';
 import CreatePost from '@/components/CreatePost';
@@ -76,53 +77,55 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-accent/10">
-      <Header activeTab={activeTab} setActiveTab={setActiveTab} />
+    <ThemeProvider>
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-accent/10">
+        <Header activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          
-          <PrivacyPanel 
-            privacySettings={privacySettings}
-            setPrivacySettings={setPrivacySettings}
-          />
-
-          {/* Main Content Area */}
-          <div className="lg:col-span-2 space-y-6">
+        <div className="container mx-auto px-4 py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             
-            {/* Feed Tab */}
-            {activeTab === 'feed' && (
-              <>
-                <CreatePost
-                  newPost={newPost}
-                  setNewPost={setNewPost}
-                  selectedImage={selectedImage}
-                  setSelectedImage={setSelectedImage}
-                />
+            <PrivacyPanel 
+              privacySettings={privacySettings}
+              setPrivacySettings={setPrivacySettings}
+            />
 
-                <div className="space-y-4">
-                  {posts.map((post) => (
-                    <PostCard
-                      key={post.id}
-                      post={post}
-                      isLiked={likedPosts.has(post.id)}
-                      onLike={handleLike}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
+            {/* Main Content Area */}
+            <div className="lg:col-span-2 space-y-6">
+              
+              {/* Feed Tab */}
+              {activeTab === 'feed' && (
+                <>
+                  <CreatePost
+                    newPost={newPost}
+                    setNewPost={setNewPost}
+                    selectedImage={selectedImage}
+                    setSelectedImage={setSelectedImage}
+                  />
 
-            {/* Profile Tab */}
-            {activeTab === 'profile' && <ProfileTab />}
+                  <div className="space-y-4">
+                    {posts.map((post) => (
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        isLiked={likedPosts.has(post.id)}
+                        onLike={handleLike}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
 
-            {/* Messages Tab */}
-            {activeTab === 'messages' && <MessagesTab friends={friends} />}
+              {/* Profile Tab */}
+              {activeTab === 'profile' && <ProfileTab />}
+
+              {/* Messages Tab */}
+              {activeTab === 'messages' && <MessagesTab friends={friends} />}
+            </div>
+
+            <RightSidebar friends={friends} communities={communities} />
           </div>
-
-          <RightSidebar friends={friends} communities={communities} />
         </div>
       </div>
-    </div>
+    </ThemeProvider>
   );
 }

@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { useTheme } from '@/context/ThemeContext';
 import Icon from '@/components/ui/icon';
 
 interface HeaderProps {
@@ -36,6 +37,8 @@ const NavButton = ({
 );
 
 export default function Header({ activeTab, setActiveTab }: HeaderProps) {
+  const { theme, toggleTheme } = useTheme();
+  
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border shadow-sm">
       <div className="container mx-auto px-4 py-4">
@@ -59,6 +62,9 @@ export default function Header({ activeTab, setActiveTab }: HeaderProps) {
           </nav>
 
           <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={toggleTheme}>
+              <Icon name={theme === 'dark' ? 'Sun' : 'Moon'} size={16} />
+            </Button>
             <Button variant="outline" size="sm">
               <Icon name="Bell" size={16} />
             </Button>

@@ -1,6 +1,9 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import BlockUserDialog from '@/components/BlockUserDialog';
+import SelfDestructPhoto from '@/components/SelfDestructPhoto';
+import SecretChat from '@/components/SecretChat';
 import Icon from '@/components/ui/icon';
 
 interface PrivacySettings {
@@ -62,6 +65,17 @@ export default function PrivacyPanel({ privacySettings, setPrivacySettings }: Pr
         
         <Separator />
         
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium text-muted-foreground">Дополнительная безопасность</h4>
+          <div className="space-y-2">
+            <BlockUserDialog />
+            <SelfDestructPhoto onSendPhoto={(photo, timer) => console.log('Фото отправлено с таймером:', timer)} />
+            <SecretChat friendName="Дмитрий" />
+          </div>
+        </div>
+
+        <Separator />
+
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-muted-foreground">Статистика активности</h4>
           <div className="grid grid-cols-2 gap-2 text-center">
