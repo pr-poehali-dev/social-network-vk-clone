@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -6,11 +6,16 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState('feed');
   const [newPost, setNewPost] = useState('');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [privacySettings, setPrivacySettings] = useState({
     profileVisible: true,
     messagesFromFriends: true,
@@ -77,6 +82,18 @@ export default function Index() {
     </Button>
   );
 
+  const handleLike = (postId: number) => {
+    setLikedPosts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(postId)) {
+        newSet.delete(postId);
+      } else {
+        newSet.add(postId);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-accent/10">
       {/* Header */}
@@ -85,10 +102,10 @@ export default function Index() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                SocialNet
+                ViberaNet
               </h1>
               <Badge variant="secondary" className="animate-pulse">
-                Безопасная сеть
+                Живое общение
               </Badge>
             </div>
             
@@ -201,9 +218,22 @@ export default function Index() {
                         onChange={(e) => setNewPost(e.target.value)}
                         className="min-h-[80px] resize-none"
                       />
+                      {selectedImage && (
+                        <div className="relative">
+                          <img src={selectedImage} alt="Preview" className="max-h-40 rounded-lg object-cover w-full" />
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-2 right-2"
+                            onClick={() => setSelectedImage(null)}
+                          >
+                            <Icon name="X" size={12} />
+                          </Button>
+                        </div>
+                      )}
                       <div className="flex items-center justify-between">
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
                             <Icon name="Image" size={16} className="mr-1" />
                             Фото
                           </Button>
@@ -215,6 +245,20 @@ export default function Index() {
                             <Icon name="Music" size={16} className="mr-1" />
                             Аудио
                           </Button>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (e) => setSelectedImage(e.target?.result as string);
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
                         </div>
                         <Button>Опубликовать</Button>
                       </div>
@@ -247,15 +291,85 @@ export default function Index() {
                             </div>
                           )}
                           <div className="flex items-center gap-6">
-                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-                              <Icon name="Heart" size={16} className="mr-1" />
-                              {post.likes}
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className={`transition-all duration-300 ${
+                                likedPosts.has(post.id)
+                                  ? 'text-red-500 scale-110'
+                                  : 'text-muted-foreground hover:text-red-500 hover:scale-105'
+                              }`}
+                              onClick={() => handleLike(post.id)}
+                            >
+                              <Icon 
+                                name="Heart" 
+                                size={16} 
+                                className={`mr-1 ${likedPosts.has(post.id) ? 'animate-pulse' : ''}`}
+                                style={{ fill: likedPosts.has(post.id) ? 'currentColor' : 'none' }}
+                              />
+                              {post.likes + (likedPosts.has(post.id) ? 1 : 0)}
                             </Button>
-                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-                              <Icon name="MessageCircle" size={16} className="mr-1" />
-                              {post.comments}
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                            
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary hover:scale-105 transition-all duration-200">
+                                  <Icon name="MessageCircle" size={16} className="mr-1" />
+                                  {post.comments}
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                  <DialogTitle>Комментарии к посту</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div className="flex gap-3 p-4 bg-muted/30 rounded-lg">
+                                    <Avatar>
+                                      <AvatarImage src="/img/ba58ae71-0a10-4506-9c6b-ef601bef01c5.jpg" />
+                                      <AvatarFallback>{post.author[0]}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <h4 className="font-semibold">{post.author}</h4>
+                                        <span className="text-sm text-muted-foreground">{post.timestamp}</span>
+                                      </div>
+                                      <p className="leading-relaxed">{post.content}</p>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-3">
+                                    <div className="flex gap-3">
+                                      <Avatar className="w-8 h-8">
+                                        <AvatarFallback>И</AvatarFallback>
+                                      </Avatar>
+                                      <div className="flex-1">
+                                        <p className="text-sm"><span className="font-medium">Иван Петров:</span> Отличный пост! Полностью согласен с вашим мнением.</p>
+                                        <span className="text-xs text-muted-foreground">1 час назад</span>
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                      <Avatar className="w-8 h-8">
+                                        <AvatarFallback>М</AvatarFallback>
+                                      </Avatar>
+                                      <div className="flex-1">
+                                        <p className="text-sm"><span className="font-medium">Мария Козлова:</span> Спасибо за полезную информацию!</p>
+                                        <span className="text-xs text-muted-foreground">30 минут назад</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-3 pt-4 border-t">
+                                    <Avatar className="w-8 h-8">
+                                      <AvatarImage src="/img/ba58ae71-0a10-4506-9c6b-ef601bef01c5.jpg" />
+                                      <AvatarFallback>ВЫ</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 flex gap-2">
+                                      <Input placeholder="Написать комментарий..." className="flex-1" />
+                                      <Button size="sm">Отправить</Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+
+                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary hover:scale-105 transition-all duration-200">
                               <Icon name="Share2" size={16} className="mr-1" />
                               {post.shares}
                             </Button>
@@ -279,7 +393,7 @@ export default function Index() {
                     </Avatar>
                     <div>
                       <h2 className="text-2xl font-bold">Ваш Профиль</h2>
-                      <p className="text-muted-foreground">Активный пользователь социальной сети</p>
+                      <p className="text-muted-foreground">Активный пользователь ViberaNet</p>
                     </div>
                     <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
                       <div className="text-center">
@@ -312,7 +426,7 @@ export default function Index() {
                 <CardContent>
                   <div className="space-y-3">
                     {friends.slice(0, 2).map((friend, index) => (
-                      <div key={index} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer">
+                      <div key={index} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-all duration-200 hover:scale-[1.02]">
                         <Avatar>
                           <AvatarFallback>{friend.name[0]}</AvatarFallback>
                         </Avatar>
@@ -320,7 +434,7 @@ export default function Index() {
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{friend.name}</span>
                             <div className={`w-2 h-2 rounded-full ${
-                              friend.status === 'online' ? 'bg-green-500' : 
+                              friend.status === 'online' ? 'bg-green-500 animate-pulse' : 
                               friend.status === 'away' ? 'bg-yellow-500' : 'bg-gray-400'
                             }`} />
                           </div>
@@ -328,7 +442,7 @@ export default function Index() {
                             {index === 0 ? 'Привет! Как дела?' : 'Увидимся завтра!'}
                           </p>
                         </div>
-                        <Badge variant="secondary">2</Badge>
+                        <Badge variant="secondary" className="animate-bounce">2</Badge>
                       </div>
                     ))}
                   </div>
@@ -348,13 +462,13 @@ export default function Index() {
             <CardContent>
               <div className="space-y-3">
                 {friends.map((friend, index) => (
-                  <div key={index} className="flex items-center gap-2">
+                  <div key={index} className="flex items-center gap-2 hover:bg-muted/50 p-2 rounded-lg transition-all duration-200 cursor-pointer">
                     <Avatar className="w-8 h-8">
                       <AvatarFallback className="text-xs">{friend.name[0]}</AvatarFallback>
                     </Avatar>
                     <span className="text-sm flex-1">{friend.name}</span>
                     <div className={`w-2 h-2 rounded-full ${
-                      friend.status === 'online' ? 'bg-green-500' : 
+                      friend.status === 'online' ? 'bg-green-500 animate-pulse' : 
                       friend.status === 'away' ? 'bg-yellow-500' : 'bg-gray-400'
                     }`} />
                   </div>
@@ -373,10 +487,10 @@ export default function Index() {
             <CardContent>
               <div className="space-y-3">
                 {communities.map((community, index) => (
-                  <div key={index} className="space-y-2">
+                  <div key={index} className="space-y-2 p-2 rounded-lg hover:bg-muted/50 transition-all duration-200">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">{community.name}</span>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="hover:scale-110 transition-transform duration-200">
                         <Icon name="Plus" size={12} />
                       </Button>
                     </div>
